@@ -10,7 +10,7 @@ env:
   SSH_USERNAME: ${{ secrets.SSH_USER }}
   SSH_SERVER: ${{ secrets.SSH_HOST }}
   SSH_OPTIONS: -o StrictHostKeyChecking=yes
-  DEST_DIR: /var/www/clients/client0/web3/web/symblogo #Répertoire du backend sur le serveur
+  DEST_DIR: /var/www/clients/client0/web3/web/symblog #Répertoire du backend sur le serveur
   HTACCESS_PATH: /var/www/clients/client0/web3/web/.htaccess # Chemin du fichier .htaccess
   BACKUP_DIR: /var/www/clients/client0/web3/web/backup # Répertoire où seront stockées les sauvegardes
 
@@ -54,17 +54,26 @@ jobs:
       - name: Test SSH Connection
         run: ssh deploy "echo 'Connexion SSH réussie !'"
 
-      - name: Clone or Pull Project
+      #- name: Clone or Pull Project
+      #  run: |
+      #    ssh deploy "
+      #        cd $DEST_DIR || exit 1
+      #        export GIT_SSH_COMMAND='ssh -F /var/www/clients/client0/web3/home/defaulttestartep/.ssh/config'
+      #        if [ -d .git ]; then
+      #            echo 'Dépôt déjà présent, mise à jour avec git pull'
+      #            git reset --hard && git pull origin main
+      #            #git pull origin main
+      #        else
+      #            echo 'Dépôt non trouvé, clonage en cours...'
+      #            git clone ${{ secrets.REPO_URL }} .
+      #        fi
+      #    "
+
+      - name: Enable maintenance mode
         run: |
-          ssh deploy "
-              cd $DEST_DIR || exit 1
-              export GIT_SSH_COMMAND='ssh -F /var/www/clients/client0/web3/home/defaulttestartep/.ssh/config'
-              if [ -d .git ]; then
-                  echo 'Dépôt déjà présent, mise à jour avec git pull'
-                  git reset --hard && git pull origin main
-                  #git pull origin main
-              else
-                  echo 'Dépôt non trouvé, clonage en cours...'
-                  git clone ${{ secrets.REPO_URL }} .
-              fi
-          "
+          echo "Activating maintenance mode..."
+          ssh deploy << 'EOF'
+          echo "RewriteEngine On
+          RewriteCond %{REQUEST_URI} ^/symblog/
+          RewriteRule ^symblog/.*$ /maintenance/index.html [R=307,L]" > ${{ env.HTACCESS_PATH }}
+          EOF
