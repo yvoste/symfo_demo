@@ -1,0 +1,55 @@
+name: Deploy Backend to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SSH_PORT: 1999
+  SSH_USERNAME: ${{ secrets.SSH_USER }}
+  SSH_SERVER: ${{ secrets.SSH_HOST }}
+  SSH_OPTIONS: -o StrictHostKeyChecking=yes
+  DEST_DIR: /var/www/clients/client0/web3/web/symblog #Répertoire du backend sur le serveur
+  HTACCESS_PATH: /var/www/clients/client0/web3/web/.htaccess # Chemin du fichier .htaccess
+  BACKUP_DIR: /var/www/clients/client0/web3/web/backup # Répertoire où seront stockées les sauvegardes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          echo "Configuring SSH..."
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          echo "Host deploy
+            HostName $SSH_SERVER
+            User $SSH_USERNAME
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/id_rsa
+            StrictHostKeyChecking yes" > ~/.ssh/config
+
+          # Configuration spécifique pour GitHub
+          #echo "Host github.com
+          #  HostName github.com
+          #  User git
+          #  IdentityFile ~/.ssh/vps_git_clone
+          #  IdentitiesOnly yes
+          #  PreferredAuthentications publickey" >> ~/.ssh/config
+
+          ssh-keyscan -H -p 1999 $SSH_SERVER >> ~/.ssh/known_hosts
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/config
+
+      - name: Test SSH Connection
+        run: ssh deploy "echo 'Connexion SSH réussie !'"
