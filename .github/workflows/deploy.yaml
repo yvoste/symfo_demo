@@ -74,6 +74,8 @@ jobs:
           echo "Activating maintenance mode..."
           ssh deploy << 'EOF'
           echo "RewriteEngine On
+          # Capturer toutes les requêtes commençant par /symblog/
           RewriteCond %{REQUEST_URI} ^/symblog/
-          RewriteRule ^symblog/.*$ /maintenance/index.html [R=307,L]" > ${{ env.HTACCESS_PATH }}
+          # Rediriger vers la page de maintenance
+          RewriteRule .* /maintenance/index.html [R=307,L]" > ${{ env.HTACCESS_PATH }}
           EOF
