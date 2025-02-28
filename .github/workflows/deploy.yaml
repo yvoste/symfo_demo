@@ -69,13 +69,33 @@ jobs:
       #        fi
       #    "
 
+      #- name: Enable maintenance mode
+      #  run: |
+      #    echo "Activating maintenance mode..."
+      #    ssh deploy << 'EOF'
+      #    echo "RewriteEngine On
+      #    # Capturer toutes les requêtes
+      #    RewriteCond %{REQUEST_URI} !/maintenance.html$
+      #    RewriteRule ^.*$ /maintenance/maintenance.html [R=307,L]" > /var/www/clients/client0/web3/web/symblog/public/.htaccess
+      #    EOF
+
+      #- name: Enable maintenance mode
+      #  run: |
+      #    echo "Activating maintenance mode..."
+      #    ssh deploy@your-server << 'EOF'
+      #    cat <<EOT > /var/www/clients/client0/web3/web/symblog/public/.htaccess
+      #    <IfModule mod_rewrite.c>
+      #        RewriteEngine On
+      #        RewriteCond %{REQUEST_URI} !/maintenance.html$
+      #        RewriteRule ^.*$ /maintenance/maintenance.html [R=307,L]
+      #    </IfModule>
+      #    EOT
+      #    EOF
+
       - name: Enable maintenance mode
         run: |
           echo "Activating maintenance mode..."
-          ssh deploy << 'EOF'
-          echo "RewriteEngine On
-          # Capturer toutes les requêtes commençant par /symblog/
-          RewriteCond %{REQUEST_URI} ^/symblog/public/fr
-          # Rediriger vers la page de maintenance
-          RewriteRule ^/symblog/public/fr/.*$ /maintenance/maintenance.html [R=307,L]" > ${{ env.HTACCESS_PATH }}
+          ssh deploy@your-server << 'EOF'
+          mv /var/www/clients/client0/web3/web/symblog/public/.htaccess /var/www/clients/client0/web3/web/symblog/public/.htaccess.bak
+          mv /var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance /var/www/clients/client0/web3/web/symblog/public/.htaccess
           EOF
