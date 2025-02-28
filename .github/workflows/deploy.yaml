@@ -95,7 +95,7 @@ jobs:
       - name: Enable maintenance mode
         run: |
           echo "Activating maintenance mode..."
-          ssh deploy@your-server << 'EOF'
+          ssh deploy << 'EOF'
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess /var/www/clients/client0/web3/web/symblog/public/.htaccess.bak
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance /var/www/clients/client0/web3/web/symblog/public/.htaccess
           EOF
