@@ -49,11 +49,17 @@ jobs:
       - name: Test SSH Connection
         run: ssh deploy "echo 'SSH connection successful!'"
 
-      - name: Enable Maintenance Mode
+      - name: Enable maintenance mode
         run: |
-          ssh deploy << 'EOF'
-          [ -f "$HTACCESS_PATH.htaccess" ] && mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
-          [ -f "$HTACCESS_PATH.htaccess.maintenance" ] && mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
+          ssh deploy << EOF
+          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+            echo "Maintenance mode enabled."
+            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
+          fi
+          if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
+            echo "Maintenance mode already enabled."
+            mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
+          fi
           EOF
 
       - name: Backup Database
