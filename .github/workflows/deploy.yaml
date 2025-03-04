@@ -12,7 +12,7 @@ env:
   SSH_OPTIONS: -o StrictHostKeyChecking=yes
   DEST_DIR: /var/www/clients/client0/web3/web/symblog #Répertoire du backend sur le serveur
   HTACCESS_PATH: /var/www/clients/client0/web3/web/.htaccess # Chemin du fichier .htaccess
-  BACKUP_DIR: /var/www/clients/client0/web3/web/backup # Répertoire où seront stockées les sauvegardes
+  BACKUP_DIR: /var/www/clients/client0/web3/web/backups # Répertoire où seront stockées les sauvegardes
 
 jobs:
   deploy:
@@ -74,16 +74,14 @@ jobs:
         run: |
           echo "Backing up database..."
           ssh deploy << 'EOF'
-          mkdir -p /var/www/clients/client0/web3/web/symblog/backup
-          mysqldump -u db_user -p'db_password' database_name > /var/www/clients/client0/web3/web/symblog/backups/db_backup_$(date +%F_%T).sql
+          mysqldump -u db_user -p'db_password' database_name > $BACKUP_DIR/db_backup_$(date +%F_%T).sql
           EOF
 
       - name: Backup Source Code and Templates
         run: |
           echo "Backing up src/ and templates/..."
           ssh deploy << 'EOF'
-          mkdir -p /var/www/clients/client0/web3/web/symblog/backup
-          tar -czf /var/www/clients/client0/web3/web/symblog/backup/src_templates_backup_$(date +%F_%T).tar.gz -C /var/www/clients/client0/web3/web/symblog src templates
+          tar -czf $BACKUP_DIR/src_templates_backup_$(date +%F_%T).tar.gz -C /var/www/clients/client0/web3/web/symblog src templates
           EOF
 
       - name: Deploy Application with Rsync
@@ -146,7 +144,7 @@ jobs:
         run: |
           echo "Rolling back src/ and templates/..."
           ssh deploy << 'EOF'
-          tar -xzf /var/www/clients/client0/web3/web/symblog/backup/src_templates_backup_$(ls -t /var/www/clients/client0/web3/web/symblog/backup | head -n 1) -C /var/www/clients/client0/web3/web/symblog
+          tar -xzf $BACKUP_DIR/src_templates_backup_$(ls -t $BACKUP_DIR | head -n 1) -C /var/www/clients/client0/web3/web/symblog
           EOF
 
       - name: Disable maintenance mode
