@@ -104,12 +104,12 @@ jobs:
 
       - name: Validate Deployment
         run: |
-          RESPONSE=$(curl -L -s -o /dev/null -w "%{http_code}" https://testartep.org/symblog
+          RESPONSE=$(curl -L -s -o /dev/null -w "%{http_code}" "https://testartep.org/symblog")
           if [[ "$RESPONSE" -ne 200 ]]; then
-            echo "Application not responding. Rolling back..."
+            echo "Application is not responding! HTTP Status: $RESPONSE"
             exit 1
           fi
-          echo "Deployment successful!"
+          echo "Deployment successful! HTTP Status: $RESPONSE"
 
       - name: Update Dependencies and Clear Cache
         run: |
@@ -142,8 +142,8 @@ jobs:
       - name: Rollback Source Code and Templates
         if: failure()
         run: |
-          ssh deploy << 'EOF'
-          tar -xzf "$(ls -t "/var/www/clients/client0/web3/web/backups/src_templates_backup.tar.gz")" -C "$DEST_DIR"
+          ssh deploy << EOF
+          tar -xzf "/var/www/clients/client0/web3/web/backups/src_templates_backup.tar.gz" -C "$DEST_DIR"
           EOF
 
       - name: Disable Maintenance Mode
