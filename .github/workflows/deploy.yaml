@@ -61,8 +61,8 @@ jobs:
         run: |
           echo "Activating maintenance mode..."
           ssh deploy << 'EOF'
-          mv $HTACCESS_PATH/.htaccess $HTACCESS_PATH/.htaccess.bak
-          mv $HTACCESS_PATH/.htaccess.maintenance $HTACCESS_PATH/.htaccess
+          mv $HTACCESS_PATH.htaccess $HTACCESS_PATH.htaccess.bak
+          mv $HTACCESS_PATH.htaccess.maintenance $HTACCESS_PATH.htaccess
           EOF
 
       #- name: Reload Apache
@@ -153,8 +153,8 @@ jobs:
         run: |
           echo "Disabling maintenance mode..."
           ssh deploy << 'EOF'
-          mv $HTACCESS_PATH/.htaccess $HTACCESS_PATH/.htaccess.maintenance
-          mv $HTACCESS_PATH/.htaccess.bak $HTACCESS_PATH/.htaccess
+          mv $HTACCESS_PATH.htaccess $HTACCESS_PATH.htaccess.maintenance
+          mv $HTACCESS_PATH.htaccess.bak $HTACCESS_PATH.htaccess
           EOF
 
       #- name: sleep
