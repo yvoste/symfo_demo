@@ -66,10 +66,9 @@ jobs:
         env:
           DB_PASSWORD_FILE: ~/.ssh/db_password
         run: |
-          echo "${{ secrets.DB_PASSWORD }}" > ~/.ssh/db_password
-          chmod 600 ~/.ssh/db_password
-          ssh deploy "mysqldump -u ${{ secrets.DB_USER }} --password-file=$DB_PASSWORD_FILE $DATABASE_NAME > $BACKUP_DIR/db_backup_$(date +%F_%T).sql"
-          ssh deploy "rm ~/.ssh/db_password"
+          ssh deploy << EOF
+          mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup_\$(date +%F_%T).sql
+          EOF
 
       - name: Backup Source Code and Templates
         run: |
@@ -134,9 +133,15 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy << 'EOF'
-          [ -f "$HTACCESS_PATH.htaccess" ] && mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
-          [ -f "$HTACCESS_PATH.htaccess.bak" ] && mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
+          ssh deploy << EOF
+          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+            echo "Maintenance mode disabled."
+            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
+          fi
+          if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
+            echo "Maintenance mode already disabled."
+            mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
+          fi
           EOF
 
       - name: Cleanup Old Backups
