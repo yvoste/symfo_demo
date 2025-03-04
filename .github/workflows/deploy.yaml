@@ -62,10 +62,10 @@ jobs:
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance /var/www/clients/client0/web3/web/symblog/public/.htaccess
           EOF
 
-      - name: Reload Apache
-        run: |
-          echo "Reloading Apache..."
-          ssh deploy "sudo systemctl reload apache2"
+      #- name: Reload Apache
+      #  run: |
+      #    echo "Reloading Apache..."
+      #    ssh deploy "sudo systemctl reload apache2"
 
       - name: sleep
         run: sleep 5
@@ -161,7 +161,7 @@ jobs:
       - name: sleep
         run: sleep 5
 
-      - name: Reload Apache
-        run: |
-          echo "Reloading Apache..."
-          ssh deploy "sudo systemctl reload apache2"
+      #- name: Reload Apache
+      #  run: |
+      #    echo "Reloading Apache..."
+      #    ssh deploy "sudo systemctl reload apache2"
