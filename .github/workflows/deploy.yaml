@@ -63,33 +63,25 @@ jobs:
           EOF
 
       - name: Backup Database
-        env:
-          DB_PASSWORD_FILE: ~/.ssh/db_password
         run: |
           ssh deploy << EOF
-          # Vérifier que le répertoire de destination existe et est accessible
-          #mkdir -p "$BACKUP_DIR"
           mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup_\$(date +%F_%T).sql
           EOF
 
       - name: Backup Source Code and Templates
         run: |
           ssh deploy << 'EOF'
-          # Vérifier que le répertoire de destination existe et est accessible
-          #mkdir -p "$BACKUP_DIR"
-
-          # Utiliser des chemins absolus complets
-          BACKUP_FILE="$BACKUP_DIR/src_templates_backup_$(date +%F_%T).tar.gz"
 
           # Vérifier que les répertoires source existent
           if [ -d "$DEST_DIR/src" ] && [ -d "$DEST_DIR/templates" ]; then
             # Utiliser tar avec des chemins absolus et des quotes
-            tar -czf "$BACKUP_FILE" -C "$DEST_DIR" src templates
+            #tar -czf "$BACKUP_FILE" -C "$DEST_DIR" src templates
+            echo "Backing up src/ and templates/..."
+            tar -czf $BACKUP_DIR/src_templates_backup_$(date +%F_%T).tar.gz -C $DEST_DIR src templates
 
             # Vérifier que la sauvegarde a été créée
-            if [ -f "$BACKUP_FILE" ]; then
-              echo "Backup created successfully: $BACKUP_FILE"
-              ls -l "$BACKUP_FILE"
+            if [ -f "$BACKUP_DIR/src_templates_backup_$(date +%F_%T).tar.gz" ]; then
+              echo "Backup created successfully"
             else
               echo "Backup failed to create"
               exit 1
