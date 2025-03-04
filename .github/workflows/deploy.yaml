@@ -175,7 +175,7 @@ jobs:
       - name: Cleanup Old Backups
         if: always()
         run: |
-          ssh deploy << 'EOF'
+          ssh deploy << EOF
           find "$BACKUP_DIR" -type f -name "db_backup.sql" -delete
           find "$BACKUP_DIR" -type f -name "src_templates_backup.tar.gz" -delete
           EOF
