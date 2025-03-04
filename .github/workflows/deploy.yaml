@@ -68,7 +68,7 @@ jobs:
         run: |
           ssh deploy << EOF
           # Vérifier que le répertoire de destination existe et est accessible
-          mkdir -p "$BACKUP_DIR"
+          #mkdir -p "$BACKUP_DIR"
           mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup_\$(date +%F_%T).sql
           EOF
 
@@ -76,7 +76,7 @@ jobs:
         run: |
           ssh deploy << 'EOF'
           # Vérifier que le répertoire de destination existe et est accessible
-          mkdir -p "$BACKUP_DIR"
+          #mkdir -p "$BACKUP_DIR"
 
           # Utiliser des chemins absolus complets
           BACKUP_FILE="$BACKUP_DIR/src_templates_backup_$(date +%F_%T).tar.gz"
