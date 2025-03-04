@@ -66,7 +66,7 @@ jobs:
       - name: Backup Database
         run: |
           ssh deploy << EOF
-          mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup_\$(date +%F_%T).sql
+          mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup.sql
           EOF
 
       - name: Backup Source Code and Templates
@@ -176,6 +176,6 @@ jobs:
         if: always()
         run: |
           ssh deploy << 'EOF'
-          find "$BACKUP_DIR" -type f -name "db_backup" -delete
-          find "$BACKUP_DIR" -type f -name "src_templates_backup" -delete
+          find "$BACKUP_DIR" -type f -name "db_backup.sql" -delete
+          find "$BACKUP_DIR" -type f -name "src_templates_backup.tar.gz" -delete
           EOF
