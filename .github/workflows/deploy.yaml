@@ -54,44 +54,6 @@ jobs:
       - name: Test SSH Connection
         run: ssh deploy "echo 'Connexion SSH réussie !'"
 
-      #- name: Clone or Pull Project
-      #  run: |
-      #    ssh deploy "
-      #        cd $DEST_DIR || exit 1
-      #        export GIT_SSH_COMMAND='ssh -F /var/www/clients/client0/web3/home/defaulttestartep/.ssh/config'
-      #        if [ -d .git ]; then
-      #            echo 'Dépôt déjà présent, mise à jour avec git pull'
-      #            git reset --hard && git pull origin main
-      #            #git pull origin main
-      #        else
-      #            echo 'Dépôt non trouvé, clonage en cours...'
-      #            git clone ${{ secrets.REPO_URL }} .
-      #        fi
-      #    "
-
-      #- name: Enable maintenance mode
-      #  run: |
-      #    echo "Activating maintenance mode..."
-      #    ssh deploy << 'EOF'
-      #    echo "RewriteEngine On
-      #    # Capturer toutes les requêtes
-      #    RewriteCond %{REQUEST_URI} !/maintenance.html$
-      #    RewriteRule ^.*$ /maintenance/maintenance.html [R=307,L]" > /var/www/clients/client0/web3/web/symblog/public/.htaccess
-      #    EOF
-
-      #- name: Enable maintenance mode
-      #  run: |
-      #    echo "Activating maintenance mode..."
-      #    ssh deploy@your-server << 'EOF'
-      #    cat <<EOT > /var/www/clients/client0/web3/web/symblog/public/.htaccess
-      #    <IfModule mod_rewrite.c>
-      #        RewriteEngine On
-      #        RewriteCond %{REQUEST_URI} !/maintenance.html$
-      #        RewriteRule ^.*$ /maintenance/maintenance.html [R=307,L]
-      #    </IfModule>
-      #    EOT
-      #    EOF
-
       - name: Enable maintenance mode
         run: |
           echo "Activating maintenance mode..."
@@ -100,13 +62,106 @@ jobs:
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance /var/www/clients/client0/web3/web/symblog/public/.htaccess
           EOF
 
+      - name: Reload Apache
+        run: |
+          echo "Reloading Apache..."
+          ssh deploy "sudo systemctl reload apache2"
+
       - name: sleep
-        run: sleep 30
+        run: sleep 5
+
+      - name: Backup Database
+        run: |
+          echo "Backing up database..."
+          ssh deploy << 'EOF'
+          mkdir -p /var/www/clients/client0/web3/web/symblog/backup
+          mysqldump -u db_user -p'db_password' database_name > /var/www/clients/client0/web3/web/symblog/backups/db_backup_$(date +%F_%T).sql
+          EOF
+
+      - name: Backup Source Code and Templates
+        run: |
+          echo "Backing up src/ and templates/..."
+          ssh deploy << 'EOF'
+          mkdir -p /var/www/clients/client0/web3/web/symblog/backup
+          tar -czf /var/www/clients/client0/web3/web/symblog/backup/src_templates_backup_$(date +%F_%T).tar.gz -C /var/www/clients/client0/web3/web/symblog src templates
+          EOF
+
+      - name: Deploy Application with Rsync
+        run: |
+          echo "Deploying application..."
+          rsync -avz --delete --exclude='var/' --exclude='vendor/' --exclude='cache/' --exclude='.env.local' --exclude='.env' ./ deploy:/var/www/clients/client0/web3/web/symblog/
+
+      - name: Validate Deployment
+        run: |
+          echo "Checking if application is running..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://your-domain.com)
+          if [[ "$RESPONSE" -ne 200 ]]; then
+            echo "Application is not responding! Rolling back..."
+            exit 1
+          fi
+          echo "Deployment successful!"
+
+      - name: Clear cache and optimize autoload
+        run: |
+          echo "Clearing Symfony cache..."
+          ssh deploy << 'EOF'
+          cd /var/www/clients/client0/web3/web/symblog
+          php bin/console cache:clear --env=prod
+          php bin/console cache:warmup --env=prod
+          composer dump-autoload --optimize
+          EOF
+
+      - name: Check and install Composer dependencies
+        run: |
+          echo "Checking Composer dependencies..."
+          ssh deploy << 'EOF'
+          cd /var/www/clients/client0/web3/web/symblog
+          git fetch --unshallow || true
+          if git diff --name-only origin/main | grep -q "composer.lock"; then
+            echo "Composer.lock changed, installing dependencies..."
+            composer install --no-dev --optimize-autoloader
+          else
+            echo "No Composer changes detected, skipping install."
+          fi
+          EOF
+
+      - name: Run Doctrine migrations if necessary
+        run: |
+          echo "Checking for pending migrations..."
+          ssh deploy << 'EOF'
+          cd /var/www/clients/client0/web3/web/symblog
+          if php bin/console doctrine:migrations:status | grep -q "New Migrations"; then
+            echo "New migrations found, running migrations..."
+            php bin/console doctrine:migrations:migrate --no-interaction
+          else
+            echo "No new migrations detected."
+          fi
+          EOF
+
+      #- name: sleep
+      #  run: sleep 30
+
+      - name: Rollback Source Code and Templates
+        if: failure()
+        run: |
+          echo "Rolling back src/ and templates/..."
+          ssh deploy << 'EOF'
+          tar -xzf /var/www/clients/client0/web3/web/symblog/backup/src_templates_backup_$(ls -t /var/www/clients/client0/web3/web/symblog/backup | head -n 1) -C /var/www/clients/client0/web3/web/symblog
+          EOF
 
       - name: Disable maintenance mode
+        if: always()
         run: |
           echo "Disabling maintenance mode..."
           ssh deploy << 'EOF'
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess /var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance
           mv /var/www/clients/client0/web3/web/symblog/public/.htaccess.bak /var/www/clients/client0/web3/web/symblog/public/.htaccess
           EOF
+
+      - name: sleep
+        run: sleep 5
+
+      - name: Reload Apache
+        run: |
+          echo "Reloading Apache..."
+          ssh deploy "sudo systemctl reload apache2"
