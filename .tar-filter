@@ -24,4 +24,4 @@
 
 # Exclure les fichiers de dépendances et de build
 - node_modules/
-- public/build/
+#- public/build/
