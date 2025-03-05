@@ -78,7 +78,7 @@ jobs:
           cat "${FILTER_FILE}"
           if [ -d "/var/www/clients/client0/web3/web/symblog" ]; then
             echo "Backing up ..."
-            tar -czf "${BACKUP_FILE}" -X "${FILTER_FILE}" -C "${DEST_DIR}" .
+            tar -czf "${BACKUP_FILE}" --exclude-from="${FILTER_FILE}" -C "${DEST_DIR}" .
 
             # Vérifier que la sauvegarde a été créée
             if [ -f "${BACKUP_FILE}" ]; then
