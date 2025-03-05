@@ -1,0 +1,27 @@
+
+# Exclusions spécifiques à Symfony
+- vendor/
+- var/cache/
+- var/log/
+
+# Exclusions des fichiers de développement
+#- .env
+#- .env.local
+#- .env.*.local
+
+# Exclusions des répertoires de configuration IDE et outils
+- .git/
+- .gitignore
+- .github/
+- .idea/
+- .vscode/
+
+# Exclusions des fichiers temporaires et de system
+- *~
+- *.swp
+- .DS_Store
+- Thumbs.db
+
+# Exclure les fichiers de dépendances et de build
+- node_modules/
+- public/build/
