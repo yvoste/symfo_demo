@@ -74,7 +74,8 @@ jobs:
       - name: Backup Source Code and Templates
         run: |
           ssh deploy << EOF
-          echo "${FILTER_FILE}"
+          echo "Contenu du fichier de filtre :"
+          cat "${FILTER_FILE}"
           if [ -d "/var/www/clients/client0/web3/web/symblog" ]; then
             echo "Backing up ..."
             tar -czf "${BACKUP_FILE}" -X "${FILTER_FILE}" -C "${DEST_DIR}" .
