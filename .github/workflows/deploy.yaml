@@ -114,7 +114,7 @@ jobs:
 
       - name: Update Dependencies and Clear Cache
         run: |
-          ssh deploy << 'EOF'
+          ssh deploy << EOF
           cd "$DEST_DIR" && {
             echo "Clearing cache..."
             php bin/console cache:clear
