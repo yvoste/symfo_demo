@@ -74,6 +74,7 @@ jobs:
       - name: Backup Source Code and Templates
         run: |
           ssh deploy << EOF
+          echo "${FILTER_FILE}"
           if [ -d "/var/www/clients/client0/web3/web/symblog" ]; then
             echo "Backing up ..."
             tar -czf "${BACKUP_FILE}" -X "${FILTER_FILE}" -C "${DEST_DIR}" .
@@ -94,7 +95,12 @@ jobs:
 
       - name: Deploy Application with Rsync
         run: |
-          rsync -avz deploy:$DEST_DIR/
+          rsync -avz \
+            --exclude='var/cache' \
+            --exclude='vendor/' \
+            --exclude='.env.local' \
+            --exclude='.env' \
+            ./ deploy:$DEST_DIR/
 
       #failed because IP response 403
       #- name: Validate Deployment
