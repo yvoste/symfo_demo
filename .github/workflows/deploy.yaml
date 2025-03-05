@@ -156,7 +156,7 @@ jobs:
         run: |
           ssh deploy << EOF
           echo "Rolling back source code and templates..."
-          tar -xzf "/var/www/clients/client0/web3/web/backups/src_templates_backup.tar.gz" -C "$DEST_DIR"
+          tar -xzf "/var/www/clients/client0/web3/web/backups/symblog_backup.tar.gz" -C "$DEST_DIR"
           EOF
 
       - name: Disable Maintenance Mode
