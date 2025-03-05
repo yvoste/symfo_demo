@@ -139,13 +139,13 @@ jobs:
 
       - name: Run Doctrine Migrations
         run: |
-          ssh deploy << 'EOF'
+          ssh deploy << EOF
           cd "$DEST_DIR" && {
-            if php bin/console doctrine:migrations:status -no-ansi | grep -q "New Migrations"; then
-              echo "New migrations found, running migrations..."
+            if [ "$(php bin/console doctrine:migrations:upcoming --no-ansi | wc -l)" -gt 1 ]; then
+              echo "Pending migrations found, running migrations..."
               php bin/console doctrine:migrations:migrate --no-interaction
             else
-              echo "No new migrations detected."
+              echo "No pending migrations detected."
             fi
           }
           EOF
