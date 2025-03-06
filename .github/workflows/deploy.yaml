@@ -73,7 +73,7 @@ jobs:
       - name: Backup Source Code and Templates
         run: |
           ssh deploy << EOF
-          if [ -d "/var/www/clients/client0/web3/web/symblog" ]; then
+          if [ -d "${DEST_DIR}" ]; then
             echo "Backing up ..."
             tar -czf "${BACKUP_FILE}" \
              --exclude="var/cache" \
@@ -142,12 +142,6 @@ jobs:
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             php bin/console doctrine:migrations:migrate --no-interaction
-            #if php bin/console doctrine:migrations:list --no-ansi | grep -q "not executed"; then
-            #  echo "Pending migrations found, running migrations..."
-            #  php bin/console doctrine:migrations:migrate --no-interaction
-            #else
-            #  echo "No pending migrations detected."
-            #fi
           }
           EOF
 
