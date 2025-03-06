@@ -160,13 +160,15 @@ jobs:
             if [ -f "${BACKUP_FILE}" ]; then
               echo "Rolling back source code and templates..."
               tar -xzf "${BACKUP_FILE}" -C "${DEST_DIR}"
-              echo "Clearing cache..."
-              php bin/console cache:clear
-              php bin/console cache:warmup
             else
               echo "No backup file found. Cannot rollback."
               exit 1
             fi
+            cd "$DEST_DIR" && {
+              echo "Clearing cache..."
+              php bin/console cache:clear
+              php bin/console cache:warmup
+            }
           EOF
 
       - name: Disable Maintenance Mode

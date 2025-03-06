@@ -29,7 +29,3 @@ phpstan.neon
 ###< phpstan/phpstan ###
 /RECUP
 /.sql
-
-###> liip/imagine-bundle ###
-/public/media/cache/
-###< liip/imagine-bundle ###
