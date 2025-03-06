@@ -127,12 +127,7 @@ jobs:
         run: |
           ssh deploy << 'EOF'
           cd "$DEST_DIR" && {
-            # Vérifier si c'est un dépôt Git
-            if [ ! -d ".git" ]; then
-              echo "❌ ERROR: No .git directory found in $DEST_DIR"
-              exit 1
-            fi
-            git fetch origin
+            git fetch origin main
             if git diff --name-only origin/main | grep -q "composer.lock"; then
               echo "Composer.lock changed, installing dependencies..."
               composer install --no-dev --optimize-autoloader
@@ -147,6 +142,12 @@ jobs:
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             php bin/console doctrine:migrations:migrate --no-interaction
+            #if php bin/console doctrine:migrations:list --no-ansi | grep -q "not executed"; then
+            #  echo "Pending migrations found, running migrations..."
+            #  php bin/console doctrine:migrations:migrate --no-interaction
+            #else
+            #  echo "No pending migrations detected."
+            #fi
           }
           EOF
 
