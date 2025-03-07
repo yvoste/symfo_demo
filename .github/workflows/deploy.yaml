@@ -216,9 +216,9 @@ jobs:
         run: |
           ssh deploy "cd $DEST_DIR && {
             if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
-              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess-maintenance\";
-              if [ -f \"$HTACCESS_PATH.htaccess-bak\" ]; then
-                mv \"$HTACCESS_PATH.htaccess-bak\" \"$HTACCESS_PATH.htaccess\";
+              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
+              if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
+                mv \"$HTACCESS_PATH.htaccess.bak\" \"$HTACCESS_PATH.htaccess\";
                 echo \"Maintenance mode disabled.\";
               fi
             fi
