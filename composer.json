@@ -21,6 +21,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^3.0",
         "dompdf/dompdf": "^3.1",
+        "knplabs/knp-snappy-bundle": "^1.10",
         "knpuniversity/oauth2-client-bundle": "^2.18",
         "league/commonmark": "^2.1",
         "symfony/apache-pack": "^1.0",

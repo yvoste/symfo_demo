@@ -136,7 +136,7 @@ jobs:
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             echo "Composer.lock changed, installing dependencies..."
-            composer install --no-dev --optimize-autoloader
+            composer install --optimize-autoloader
           }
           EOF
 
