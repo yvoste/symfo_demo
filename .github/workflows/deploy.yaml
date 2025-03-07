@@ -75,11 +75,13 @@ jobs:
           #  fi
           #}"
           ssh deploy << EOF
-          echo "<IfModule mod_rewrite.c>
-                RewriteEngine On
-                RewriteCond %{REQUEST_URI} !/maintenance.html$
-                RewriteRule ^.*$ /maintenance/maintenance.html [R=307,L]
-            </IfModule>" > "$HTACCESS_PATH.htaccess"
+          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
+            echo "Maintenance mode enabled."
+            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak
+          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance" ]; then
+            echo "Maintenance mode already enabled."
+            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance" "/var/www/clients/client0/web3/web/symblog/public/.htaccess"
+          fi
           EOF
 
       # 4 Backup Database with timestamp
@@ -221,24 +223,16 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          #ssh deploy "cd $DEST_DIR && {
-          #  if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
-          #    mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
-          #    if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
-          #      mv \"$HTACCESS_PATH.htaccess.bak\" \"$HTACCESS_PATH.htaccess\";
-          #      echo \"Maintenance mode disabled.\";
-          #    fi
-          #  fi
-          #}"
+
           ssh deploy << EOF
-          echo "<IfModule mod_rewrite.c>
-                RewriteEngine On
-                # Vérifie si la requête pointe vers un fichier ou un dossier existant
-                RewriteCond %{REQUEST_FILENAME} !-f
-                RewriteCond %{REQUEST_FILENAME} !-d
-                # Redirige toutes les requêtes vers index.php
-                RewriteRule ^(.*)$ index.php [QSA,L]
-            </IfModule>" > "$HTACCESS_PATH.htaccess"
+          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
+            echo "Maintenance mode disabled."
+            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance"
+          fi
+          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" ]; then
+            echo "Maintenance mode already disabled."
+            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" "/var/www/clients/client0/web3/web/symblog/public/.htaccess"
+          fi
           EOF
 
       # 13 Notify on success or failure
