@@ -65,7 +65,7 @@ jobs:
       # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy << EOF
+          ssh deploy << 'EOF'
           if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
             echo "Maintenance mode disabled."
             mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance"
@@ -216,7 +216,7 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy << EOF
+          ssh deploy << 'EOF'
           if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
             echo "Maintenance mode disabled."
             mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance"
