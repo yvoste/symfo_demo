@@ -66,13 +66,13 @@ jobs:
       - name: Enable maintenance mode
         run: |
           ssh deploy << EOF
-          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+          if [ -f "${HTACCESS_PATH}.htaccess" ]; then
             echo "Maintenance mode enabled."
-            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
+            mv "${HTACCESS_PATH}.htaccess" "${HTACCESS_PATH}.htaccess-bak"
           fi
-          if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
+          if [ -f "${HTACCESS_PATH}.htaccess-maintenance" ]; then
             echo "Maintenance mode already enabled."
-            mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
+            mv "${HTACCESS_PATH}.htaccess-maintenance" "${HTACCESS_PATH}.htaccess"
           fi
           EOF
 
@@ -216,13 +216,13 @@ jobs:
         if: always()
         run: |
           ssh deploy << EOF
-          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+          if [ -f "${HTACCESS_PATH}.htaccess" ]; then
             echo "Maintenance mode disabled."
-            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
+            mv "${HTACCESS_PATH}.htaccess" "${HTACCESS_PATH}.htaccess-maintenance"
           fi
-          if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
+          if [ -f "${HTACCESS_PATH}.htaccess-bak" ]; then
             echo "Maintenance mode already disabled."
-            mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
+            mv "${HTACCESS_PATH}.htaccess-bak" "${HTACCESS_PATH}.htaccess"
           fi
           EOF
 
