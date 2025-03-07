@@ -13,9 +13,8 @@ env:
   DEST_DIR: /var/www/clients/client0/web3/web/symblog
   HTACCESS_PATH: /var/www/clients/client0/web3/web/symblog/public/
   BACKUP_DIR: /var/www/clients/client0/web3/web/backups
-  BACKUP_FILE: /var/www/clients/client0/web3/web/backups/symblog_backup.tar.gz
   DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
-  DATE: date +%F_%T
+  TIMESTAMP: $(date +%Y%m%d_%H%M%S)
 
 jobs:
   deploy:
@@ -27,6 +26,7 @@ jobs:
         with:
           fetch-depth: 0 # Fetches full history for accurate comparisons
 
+      # 0 Connexion SSH
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
@@ -48,147 +48,188 @@ jobs:
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/known_hosts ~/.ssh/config
 
+      # 1 Test is SSH successful
       - name: Test SSH Connection
         run: ssh deploy "echo 'SSH connection successful!'"
 
+      # 2 Check composer.lock for changes
+      - name: Check for Composer Changes
+        id: check-composer
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q "composer.lock"; then
+            echo "composer_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "composer_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy << EOF
-          if [ -f "$HTACCESS_PATH.htaccess" ]; then
-            echo "Maintenance mode enabled."
-            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
-          fi
-          if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
-            echo "Maintenance mode already enabled."
-            mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
-          fi
-          EOF
+          ssh deploy "cd $DEST_DIR && php bin/console lexik:maintenance:lock || {
+            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.bak\";
+              if [ -f \"$HTACCESS_PATH.htaccess.maintenance\" ]; then
+                mv \"$HTACCESS_PATH.htaccess.maintenance\" \"$HTACCESS_PATH.htaccess\";
+                echo \"Maintenance mode enabled.\";
+              fi
+            fi
+          }"
 
+      # 4 Backup Database with timestamp
       - name: Backup Database
         run: |
           ssh deploy << EOF
-          mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/db_backup.sql
+          TIMESTAMP=\$(date +%Y%m%d_%H%M%S)
+          mkdir -p $BACKUP_DIR/\$TIMESTAMP
+          mysqldump -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME > $BACKUP_DIR/\$TIMESTAMP/db_backup.sql
+          echo "Database backup created at $BACKUP_DIR/\$TIMESTAMP/db_backup.sql"
+          # Keep only the 5 most recent backups
+          ls -tp $BACKUP_DIR/ | grep '/$' | tail -n +6 | xargs -I {} rm -rf $BACKUP_DIR/{}
           EOF
 
-      - name: Backup Source Code and Templates
+      # 5 Backup Source Code (complet application)
+      - name: Backup Source Code
         run: |
           ssh deploy << EOF
           if [ -d "${DEST_DIR}" ]; then
-            echo "Backing up ..."
-            tar -czf "${BACKUP_FILE}" \
+            TIMESTAMP=\$(date +%Y%m%d_%H%M%S)
+            BACKUP_FILE="$BACKUP_DIR/\$TIMESTAMP/symblog_backup.tar.gz"
+            mkdir -p $BACKUP_DIR/\$TIMESTAMP
+
+            echo "Backing up to \$BACKUP_FILE..."
+            tar -czf "\$BACKUP_FILE" \
              --exclude="var/cache" \
              -C "${DEST_DIR}" .
 
             # Vérifier que la sauvegarde a été créée
-            if [ -f "${BACKUP_FILE}" ]; then
-              echo "Backup created successfully"
+            if [ -f "\$BACKUP_FILE" ]; then
+              echo "Backup created successfully at \$BACKUP_FILE"
+              # Create a symlink to the latest backup for rollback use
+              ln -sf "\$BACKUP_FILE" "$BACKUP_DIR/latest_backup.tar.gz"
             else
               echo "Backup failed to create"
               exit 1
             fi
           else
-            echo "Source or templates directory not found"
+            echo "Source directory not found"
             exit 1
           fi
-
           EOF
 
+      # 6 Deploy Application with Rsync excluding cache, vendor, .env.local, .env
       - name: Deploy Application with Rsync
         run: |
+          #--delete-after flag deletes files on the server that are not present in the source
           rsync -avz \
             --exclude='var/cache' \
             --exclude='vendor/' \
             --exclude='.env.local' \
             --exclude='.env' \
+            --exclude='.git/' \
+            --delete-after \
             ./ deploy:$DEST_DIR/
 
-      #failed because github IP not in authorized IP
-      #- name: Validate Deployment
-      #  run: |
-      #    RESPONSE=$(curl -L -s -o /dev/null -w "%{http_code}" "https://testartep.org/symblog")
-      #    if [[ "$RESPONSE" -ne 200 ]]; then
-      #      echo "Application is not responding! HTTP Status: $RESPONSE"
-      #      exit 1
-      #    fi
-      #    echo "Deployment successful! HTTP Status: $RESPONSE"
-
-      - name: Update Dependencies and Clear Cache
-        run: |
-          ssh deploy << EOF
-          cd "$DEST_DIR" && {
-            echo "Clearing cache..."
-            php bin/console cache:clear
-            php bin/console cache:warmup
-            composer dump-autoload --optimize
-          }
-          EOF
-
-      - name: Check and Install Composer Dependencies
+      # 7 Install Composer Dependencies conditionally
+      - name: Install Composer Dependencies
+        if: steps.check-composer.outputs.composer_changed == 'true'
         run: |
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             echo "Composer.lock changed, installing dependencies..."
-            composer install --no-dev
-            #git fetch origin main
-            #if git diff --name-only origin/main | grep -q "composer.lock"; then
-            #  echo "Composer.lock changed, installing dependencies..."
-            #  composer install --no-dev --optimize-autoloader
-            #else
-            #  echo "No Composer changes detected, skipping install."
-            #fi
+            composer install --no-dev --optimize-autoloader
           }
           EOF
 
+      # 8 Execute Doctrine Migrations (moved before cache clear)
       - name: Run Doctrine Migrations
         run: |
           ssh deploy << EOF
           cd "$DEST_DIR" && {
-            php bin/console doctrine:migrations:migrate --no-interaction
-            #if php bin/console doctrine:migrations:list --no-ansi | grep -q "not executed"; then
-            #  echo "Pending migrations found, running migrations..."
-            #  php bin/console doctrine:migrations:migrate --no-interaction
-            #else
-            #  echo "No pending migrations detected."
-            #fi
+            echo "Running database migrations..."
+            php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
           }
           EOF
 
-      - name: Rollback Source Code and Templates
+      # 9 Cache clear
+      - name: Clear Cache
+        run: |
+          ssh deploy << EOF
+          cd "$DEST_DIR" && {
+            echo "Clearing cache..."
+            php bin/console cache:clear --env=prod
+            # No need for warmup as it's included in cache:clear
+            # Only dump autoload if we didn't already do composer install
+            if [ "${{ steps.check-composer.outputs.composer_changed }}" != "true" ]; then
+              composer dump-autoload --optimize
+            fi
+          }
+          EOF
+
+      # 10 Verify application health
+      - name: Verify Application Health
+        run: |
+          ssh deploy << EOF
+          cd "$DEST_DIR" && {
+            # Check if the application can boot without errors
+            if php bin/console about --env=prod > /dev/null 2>&1; then
+              echo "Application health check passed!"
+            else
+              echo "Application failed health check!"
+              exit 1
+            fi
+          }
+          EOF
+
+      # 11 if failure rollback source code and database
+      - name: Rollback on Failure
         if: failure()
         run: |
           ssh deploy << EOF
-            if [ -f "${BACKUP_FILE}" ]; then
-              echo "Rolling back source code and templates..."
-              tar -xzf "${BACKUP_FILE}" -C "${DEST_DIR}"
+            LATEST_BACKUP="$BACKUP_DIR/latest_backup.tar.gz"
+            if [ -f "\$LATEST_BACKUP" ]; then
+              echo "Rolling back source code..."
+              tar -xzf "\$LATEST_BACKUP" -C "${DEST_DIR}"
+
+              # Find the latest database backup
+              LATEST_DB_DIR=\$(ls -td $BACKUP_DIR/*/ | head -1)
+              if [ -f "\$LATEST_DB_DIR/db_backup.sql" ]; then
+                echo "Rolling back database..."
+                mysql -u ${{ secrets.DB_USER }} -p"${{ secrets.DB_PASSWORD }}" $DATABASE_NAME < "\$LATEST_DB_DIR/db_backup.sql"
+              else
+                echo "No database backup found for rollback."
+              fi
+
+              cd "$DEST_DIR" && {
+                echo "Clearing cache after rollback..."
+                php bin/console cache:clear --env=prod
+              }
+              echo "Rollback completed."
             else
               echo "No backup file found. Cannot rollback."
               exit 1
             fi
-            cd "$DEST_DIR" && {
-              echo "Clearing cache..."
-              php bin/console cache:clear
-              php bin/console cache:warmup
-            }
           EOF
 
+      # 12 Disable Maintenance Mode
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy << EOF
-          if [ -f "$HTACCESS_PATH.htaccess" ]; then
-            echo "Maintenance mode disabled."
-            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
-          fi
-          if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
-            echo "Maintenance mode already disabled."
-            mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
-          fi
-          EOF
+          ssh deploy "cd $DEST_DIR && php bin/console lexik:maintenance:unlock || {
+            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
+              if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
+                mv \"$HTACCESS_PATH.htaccess.bak\" \"$HTACCESS_PATH.htaccess\";
+                echo \"Maintenance mode disabled.\";
+              fi
+            fi
+          }"
 
-      - name: Cleanup Old Backups
+      # 13 Notify on success or failure
+      - name: Notify on deployment result
         if: always()
         run: |
-          ssh deploy << EOF
-          find "$BACKUP_DIR" -type f -name "db_backup.sql" -delete
-          find "$BACKUP_DIR" -type f -name "symblog_backup.tar.gz" -delete
-          EOF
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "Deployment completed successfully!"
+          else
+            echo "Deployment failed or had issues. Check logs for details."
+          fi
