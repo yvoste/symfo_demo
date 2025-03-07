@@ -65,16 +65,15 @@ jobs:
       # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy << EOF
-          if [ -f "${HTACCESS_PATH}.htaccess" ]; then
-            echo "Maintenance mode enabled. ${HTACCESS_PATH}.htaccess"
-            mv "${HTACCESS_PATH}.htaccess" "${HTACCESS_PATH}.htaccess-bak"
-          fi
-          if [ -f "${HTACCESS_PATH}.htaccess-maintenance" ]; then
-            echo "Maintenance mode already enabled. ${HTACCESS_PATH}.htaccess-maintenance"
-            mv "${HTACCESS_PATH}.htaccess-maintenance" "${HTACCESS_PATH}.htaccess"
-          fi
-          EOF
+          ssh deploy "cd $DEST_DIR && {
+            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess-bak\";
+              if [ -f \"$HTACCESS_PATH.htaccess-maintenance\" ]; then
+                mv \"$HTACCESS_PATH.htaccess-maintenance\" \"$HTACCESS_PATH.htaccess\";
+                echo \"Maintenance mode enabled.\";
+              fi
+            fi
+          }"
 
       # 4 Backup Database with timestamp
       - name: Backup Database
@@ -215,16 +214,15 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy << EOF
-          if [ -f "${HTACCESS_PATH}.htaccess" ]; then
-            echo "Maintenance mode disabled. ${HTACCESS_PATH}.htaccess"
-            mv "${HTACCESS_PATH}.htaccess" "${HTACCESS_PATH}.htaccess-maintenance"
-          fi
-          if [ -f "${HTACCESS_PATH}.htaccess-bak" ]; then
-            echo "Maintenance mode already disabled. ${HTACCESS_PATH}.htaccess-bak"
-            mv "${HTACCESS_PATH}.htaccess-bak" "${HTACCESS_PATH}.htaccess"
-          fi
-          EOF
+          ssh deploy "cd $DEST_DIR && {
+            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess-maintenance\";
+              if [ -f \"$HTACCESS_PATH.htaccess-bak\" ]; then
+                mv \"$HTACCESS_PATH.htaccess-bak\" \"$HTACCESS_PATH.htaccess\";
+                echo \"Maintenance mode disabled.\";
+              fi
+            fi
+          }"
 
       # 13 Notify on success or failure
       - name: Notify on deployment result
