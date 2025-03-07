@@ -65,15 +65,25 @@ jobs:
       # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy "cd $DEST_DIR && {
-            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
-              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.bak\";
-              if [ -f \"$HTACCESS_PATH.htaccess.maintenance\" ]; then
-                mv \"$HTACCESS_PATH.htaccess.maintenance\" \"$HTACCESS_PATH.htaccess\";
-                echo \"Maintenance mode enabled.\";
-              fi
-            fi
-          }"
+          #ssh deploy "cd $DEST_DIR && {
+          #  if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+          #    mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.bak\";
+          #    if [ -f \"$HTACCESS_PATH.htaccess.maintenance\" ]; then
+          #      mv \"$HTACCESS_PATH.htaccess.maintenance\" \"$HTACCESS_PATH.htaccess\";
+          #      echo \"Maintenance mode enabled.\";
+          #    fi
+          #  fi
+          #}"
+          ssh deploy << EOF
+          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+            echo "Maintenance mode enabled."
+            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
+          fi
+          if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
+            echo "Maintenance mode already enabled."
+            mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
+          fi
+          EOF
 
       # 4 Backup Database with timestamp
       - name: Backup Database
@@ -214,15 +224,25 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy "cd $DEST_DIR && {
-            if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
-              mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
-              if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
-                mv \"$HTACCESS_PATH.htaccess.bak\" \"$HTACCESS_PATH.htaccess\";
-                echo \"Maintenance mode disabled.\";
-              fi
-            fi
-          }"
+          #ssh deploy "cd $DEST_DIR && {
+          #  if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
+          #    mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
+          #    if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
+          #      mv \"$HTACCESS_PATH.htaccess.bak\" \"$HTACCESS_PATH.htaccess\";
+          #      echo \"Maintenance mode disabled.\";
+          #    fi
+          #  fi
+          #}"
+          ssh deploy << EOF
+          if [ -f "$HTACCESS_PATH.htaccess" ]; then
+            echo "Maintenance mode disabled."
+            mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
+          fi
+          if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
+            echo "Maintenance mode already disabled."
+            mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
+          fi
+          EOF
 
       # 13 Notify on success or failure
       - name: Notify on deployment result
