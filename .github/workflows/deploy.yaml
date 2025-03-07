@@ -65,7 +65,7 @@ jobs:
       # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy "cd $DEST_DIR && php bin/console lexik:maintenance:lock || {
+          ssh deploy "cd $DEST_DIR && {
             if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
               mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.bak\";
               if [ -f \"$HTACCESS_PATH.htaccess.maintenance\" ]; then
@@ -156,7 +156,7 @@ jobs:
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             echo "Clearing cache..."
-            php bin/console cache:clear --env=prod
+            php bin/console cache:clear --env=dev
             # No need for warmup as it's included in cache:clear
             # Only dump autoload if we didn't already do composer install
             if [ "${{ steps.check-composer.outputs.composer_changed }}" != "true" ]; then
@@ -171,7 +171,7 @@ jobs:
           ssh deploy << EOF
           cd "$DEST_DIR" && {
             # Check if the application can boot without errors
-            if php bin/console about --env=prod > /dev/null 2>&1; then
+            if php bin/console about --env=dev > /dev/null 2>&1; then
               echo "Application health check passed!"
             else
               echo "Application failed health check!"
@@ -201,7 +201,7 @@ jobs:
 
               cd "$DEST_DIR" && {
                 echo "Clearing cache after rollback..."
-                php bin/console cache:clear --env=prod
+                php bin/console cache:clear --env=dev
               }
               echo "Rollback completed."
             else
@@ -214,7 +214,7 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy "cd $DEST_DIR && php bin/console lexik:maintenance:unlock || {
+          ssh deploy "cd $DEST_DIR && {
             if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
               mv \"$HTACCESS_PATH.htaccess\" \"$HTACCESS_PATH.htaccess.maintenance\";
               if [ -f \"$HTACCESS_PATH.htaccess.bak\" ]; then
