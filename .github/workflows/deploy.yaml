@@ -65,17 +65,8 @@ jobs:
       # 3 Enable maintenance mode
       - name: Enable maintenance mode
         run: |
-          ssh deploy << 'EOF'
-          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
-            echo "Maintenance mode disabled."
-            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance"
-          fi
-
-          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" ]; then
-            echo "Maintenance mode already disabled."
-            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" "/var/www/clients/client0/web3/web/symblog/public/.htaccess"
-          fi
-          EOF
+          echo "Enbable maintenance mode..."
+          # ssh deploy "cd $DEST_DIR && php bin/console app:maintenance enable --duration=30 --message='Mise à jour du site en cours. Nous serons de retour dans quelques minutes.'"
 
       # 4 Backup Database with timestamp
       - name: Backup Database
@@ -216,16 +207,8 @@ jobs:
       - name: Disable Maintenance Mode
         if: always()
         run: |
-          ssh deploy << 'EOF'
-          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess" ]; then
-            echo "Maintenance mode disabled."
-            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess" "/var/www/clients/client0/web3/web/symblog/public/.htaccess.maintenance"
-          fi
-          if [ -f "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" ]; then
-            echo "Maintenance mode already disabled."
-            mv "/var/www/clients/client0/web3/web/symblog/public/.htaccess.bak" "/var/www/clients/client0/web3/web/symblog/public/.htaccess"
-          fi
-          EOF
+          echo "Disable maintenance mode..."
+          # ssh deploy "cd $DEST_DIR && php bin/console app:maintenance disable"
 
       # 13 Notify on success or failure
       - name: Notify on deployment result
