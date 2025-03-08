@@ -66,7 +66,7 @@ jobs:
       - name: Enable maintenance mode
         run: |
           echo "Enbable maintenance mode..."
-          # ssh deploy "cd $DEST_DIR && php bin/console app:maintenance enable --duration=30 --message='Mise à jour du site en cours. Nous serons de retour dans quelques minutes.'"
+          ssh deploy "cd $DEST_DIR && php bin/console app:maintenance enable --duration=30 --message='Mise à jour du site en cours. Nous serons de retour dans quelques minutes.'"
 
       # 4 Backup Database with timestamp
       - name: Backup Database
@@ -208,7 +208,7 @@ jobs:
         if: always()
         run: |
           echo "Disable maintenance mode..."
-          # ssh deploy "cd $DEST_DIR && php bin/console app:maintenance disable"
+          ssh deploy "cd $DEST_DIR && php bin/console app:maintenance disable"
 
       # 13 Notify on success or failure
       - name: Notify on deployment result
