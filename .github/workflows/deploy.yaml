@@ -66,7 +66,7 @@ jobs:
       - name: Enable maintenance mode
         run: |
           echo "Enbable maintenance mode..."
-          #ssh deploy "cd $DEST_DIR && php bin/console app:maintenance enable --duration=30 --message='Mise à jour du site en cours. Nous serons de retour dans quelques minutes.'"
+          ssh deploy "cd $DEST_DIR && php bin/console app:maintenance enable --duration=70 --message='Mise à jour du site en cours. Nous serons de retour dans quelques minutes hehe.'"
 
           # ssh deploy "cd $DEST_DIR && {
           #  if [ -f \"$HTACCESS_PATH.htaccess\" ]; then
@@ -78,16 +78,16 @@ jobs:
           #  fi
           #}"
 
-          ssh deploy << EOF
-            if [ -f "$HTACCESS_PATH.htaccess" ]; then
-              echo "Maintenance mode enabled."
-              mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
-            fi
-            if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
-              echo "Maintenance mode already enabled."
-              mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
-            fi
-          EOF
+          #ssh deploy << EOF
+          #  if [ -f "$HTACCESS_PATH.htaccess" ]; then
+          #    echo "Maintenance mode enabled."
+          #    mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.bak"
+          #  fi
+          #  if [ -f "$HTACCESS_PATH.htaccess.maintenance" ]; then
+          #    echo "Maintenance mode already enabled."
+          #    mv "$HTACCESS_PATH.htaccess.maintenance" "$HTACCESS_PATH.htaccess"
+          #  fi
+          #EOF
 
       # 4 Backup Database with timestamp
       - name: Backup Database
@@ -179,15 +179,6 @@ jobs:
           }
           EOF
 
-      - name: Compile SASS
-        run: |
-          ssh deploy << EOF
-          cd "$DEST_DIR" && {
-            echo "Compiling SASS assets..."
-            php bin/console sass:build
-          }
-          EOF
-
       # 10 Verify application health
       - name: Verify Application Health
         run: |
@@ -233,23 +224,32 @@ jobs:
             fi
           EOF
 
+      - name: Compile SASS
+        run: |
+          ssh deploy << EOF
+          cd "$DEST_DIR" && {
+            echo "Compiling SASS assets..."
+            php bin/console sass:build
+          }
+          EOF
+
       # 12 Disable Maintenance Mode
       - name: Disable Maintenance Mode
         if: always()
         run: |
           echo "Disable maintenance mode..."
-          #ssh deploy "cd $DEST_DIR && php bin/console app:maintenance disable"
+          ssh deploy "cd $DEST_DIR && php bin/console app:maintenance disable"
 
-          ssh deploy << EOF
-            if [ -f "$HTACCESS_PATH.htaccess" ]; then
-              echo "Maintenance mode disabled."
-              mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
-            fi
-            if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
-              echo "Maintenance mode already disabled."
-              mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
-            fi
-          EOF
+          #ssh deploy << EOF
+          #  if [ -f "$HTACCESS_PATH.htaccess" ]; then
+          #    echo "Maintenance mode disabled."
+          #    mv "$HTACCESS_PATH.htaccess" "$HTACCESS_PATH.htaccess.maintenance"
+          #  fi
+          #  if [ -f "$HTACCESS_PATH.htaccess.bak" ]; then
+          #    echo "Maintenance mode already disabled."
+          #    mv "$HTACCESS_PATH.htaccess.bak" "$HTACCESS_PATH.htaccess"
+          #  fi
+          #EOF
 
       # 13 Notify on success or failure
       - name: Notify on deployment result

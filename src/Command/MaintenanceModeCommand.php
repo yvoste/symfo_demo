@@ -17,7 +17,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class MaintenanceModeCommand extends Command
 {
     private $maintenanceFilePath;
-    public const VALUE_OPTIONAL = 32;
 
     public function __construct(string $projectDir)
     {
