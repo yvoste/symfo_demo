@@ -154,14 +154,14 @@ jobs:
           }
           EOF
 
-      - name: Compile SASS
-        run: |
-          ssh deploy << EOF
-          cd "$DEST_DIR" && {
-            echo "Compiling SASS assets..."
-            php bin/console sass:build
-          }
-          EOF
+      #- name: Compile SASS
+      #  run: |
+      #    ssh deploy << EOF
+      #    cd "$DEST_DIR" && {
+      #      echo "Compiling SASS assets..."
+      #      php bin/console sass:build
+      #    }
+      #    EOF
 
       # 8 Execute Doctrine Migrations (moved before cache clear)
       - name: Run Doctrine Migrations
