@@ -179,6 +179,15 @@ jobs:
           }
           EOF
 
+      - name: Compile SASS
+        run: |
+          ssh deploy << EOF
+          cd "$DEST_DIR" && {
+            echo "Compiling SASS assets..."
+            php bin/console sass:build
+          }
+          EOF
+
       # 10 Verify application health
       - name: Verify Application Health
         run: |
@@ -222,15 +231,6 @@ jobs:
               echo "No backup file found. Cannot rollback."
               exit 1
             fi
-          EOF
-
-      - name: Compile SASS
-        run: |
-          ssh deploy << EOF
-          cd "$DEST_DIR" && {
-            echo "Compiling SASS assets..."
-            php bin/console sass:build
-          }
           EOF
 
       # 12 Disable Maintenance Mode
