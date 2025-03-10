@@ -90,7 +90,7 @@ class MaintenanceModeListener implements EventSubscriberInterface
             </head>
             <body>
                 <div class="container">
-                    <h1>Site en maintenance</h1>
+                    <h1>Site en maintenance POPO</h1>
                     <p>' . htmlspecialchars($message) . '</p>';
 
         if ($endTime) {

@@ -154,6 +154,15 @@ jobs:
           }
           EOF
 
+      - name: Compile SASS
+        run: |
+          ssh deploy << EOF
+          cd "$DEST_DIR" && {
+            echo "Compiling SASS assets..."
+            php bin/console sass:build
+          }
+          EOF
+
       # 8 Execute Doctrine Migrations (moved before cache clear)
       - name: Run Doctrine Migrations
         run: |
@@ -222,15 +231,6 @@ jobs:
               echo "No backup file found. Cannot rollback."
               exit 1
             fi
-          EOF
-
-      - name: Compile SASS
-        run: |
-          ssh deploy << EOF
-          cd "$DEST_DIR" && {
-            echo "Compiling SASS assets..."
-            php bin/console sass:build
-          }
           EOF
 
       # 12 Disable Maintenance Mode
