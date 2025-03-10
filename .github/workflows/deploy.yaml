@@ -175,6 +175,7 @@ jobs:
 
       # 11 if failure rollback source code and database
       - name: Rollback on Failure
+
         if: failure()
         run: |
           ssh deploy << EOF
@@ -202,6 +203,11 @@ jobs:
               exit 1
             fi
           EOF
+
+      # Compiler les assets SASS avant de désactiver le mode maintenance
+      - name: Compile Assets
+        run: |
+          ssh deploy "cd $DEST_DIR && php bin/console sass:build"
 
       # 12 Disable Maintenance Mode
       - name: Disable Maintenance Mode
