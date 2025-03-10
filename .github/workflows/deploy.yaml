@@ -120,7 +120,7 @@ jobs:
             --exclude='.env' \
             --exclude='.git/' \
             --exclude='var/maintenance.lock' \
-            --delete-after \
+            #--delete-after \
             ./ deploy:$DEST_DIR/
 
       # 7 Install Composer Dependencies conditionally
