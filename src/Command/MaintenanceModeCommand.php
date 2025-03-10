@@ -17,11 +17,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class MaintenanceModeCommand extends Command
 {
     private $maintenanceFilePath;
+    private $dirVar;
 
     public function __construct(string $projectDir)
     {
         parent::__construct();
         $this->maintenanceFilePath = $projectDir . '/var/maintenance.lock';
+        $this->dirVar = $projectDir . '/var';
     }
 
     protected function configure(): void
@@ -54,8 +56,8 @@ class MaintenanceModeCommand extends Command
                     'message' => $message,
                 ];
 
-                if (!is_dir(dirname($this->maintenanceFilePath))) {
-                    mkdir(dirname($this->maintenanceFilePath), 0777, true);
+                if (!is_dir(dirname($this->dirVar))) {
+                    mkdir(dirname($this->dirVar), 0777, true);
                 }
 
                 file_put_contents($this->maintenanceFilePath, json_encode($maintenanceData));
