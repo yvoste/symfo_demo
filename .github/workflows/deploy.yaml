@@ -113,6 +113,7 @@ jobs:
       - name: Deploy Application with Rsync
         run: |
           #--delete-after flag deletes files on the server that are not present in the source
+          #--delete-after \
           rsync -avz \
             --exclude='var/cache' \
             --exclude='vendor/' \
@@ -120,7 +121,6 @@ jobs:
             --exclude='.env' \
             --exclude='.git/' \
             --exclude='var/maintenance.lock' \
-            #--delete-after \
             ./ deploy:$DEST_DIR/
 
       # 7 Install Composer Dependencies conditionally
