@@ -41,9 +41,9 @@ class MaintenanceModeListener implements EventSubscriberInterface
         $request = $event->getRequest();
 
         // Ignorer les requêtes pour les assets statiques
-        if (preg_match('/\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/', $request->getPathInfo())) {
-            return;
-        }
+        //if (preg_match('/\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/', $request->getPathInfo())) {
+        //    return;
+        //}
 
         // Vérifier si l'IP du client est autorisée
         $clientIp = $request->getClientIp();
